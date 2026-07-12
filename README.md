@@ -1,97 +1,465 @@
 # 🏢 AssetFlow — Enterprise Asset & Resource Management System
 
-AssetFlow is a centralized, role-based ERP platform designed to simplify how modern organizations track, allocate, maintain, and audit their physical hardware, fleet vehicles, and shared meeting rooms. Built with a robust relational database schema and a gorgeous glassmorphic user interface, the system solves complex business needs like double-allocation prevention, time-slot booking conflicts, and structured inventory auditing.
+> A centralized ERP platform for managing enterprise assets, shared resources, maintenance, inventory audits, and organizational operations.
+
+![React](https://img.shields.io/badge/Frontend-React-blue)
+![Node.js](https://img.shields.io/badge/Backend-Node.js-green)
+![Express](https://img.shields.io/badge/Framework-Express-black)
+![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue)
+![Prisma](https://img.shields.io/badge/ORM-Prisma-2D3748)
+![SQLite](https://img.shields.io/badge/Database-SQLite-003B57)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
 
 ---
 
-## 🎨 Design System & User Interface Highlights
+# 📖 Overview
 
-AssetFlow features a premium visual aesthetic built using a custom vanilla CSS design system (found in `theme.css`):
-* **Live Dashboards**: Interactive KPI card displays that fetch real-time database indicators (available vs allocated counts, active bookings, overdue returns, and ongoing maintenance tasks).
-* **Audit Cycles Workspace**: A visual auditor dashboard featuring responsive inventory checklists, progress bars tracking checked items, and warning logs summarizing discrepancies (missing or damaged items).
-* **Interactive Status Pickers**: Forms discard basic browser inputs for customized, color-coded visual picker buttons (e.g. green for Verified, amber for Damaged, red for Missing) that change the submit buttons dynamically.
-* **Role-Based Adaptation**: The sidebar and forms adapt automatically to the logged-in user's role—hiding management controls for employees and showcasing administrative panels for managers.
+Modern organizations manage hundreds of physical assets such as laptops, monitors, vehicles, projectors, meeting rooms, networking equipment, and office furniture.
 
----
+Traditional spreadsheet-based tracking often leads to:
 
-## 🏗️ Technical Stack & Architecture
+- Duplicate asset allocation
+- Booking conflicts
+- Poor maintenance tracking
+- Missing inventory
+- Lack of accountability
+- No centralized reporting
 
-* **Frontend SPA**: React (Vite) styled with maximum CSS customizability (Steel Blue + Teal theme). Built statically and served directly by the Express server.
-* **Backend API**: Node.js & Express.js written in TypeScript (ES Modules).
-* **Database & ORM**: Prisma ORM targeting a SQLite database. Includes a fully normalized relational schema supporting Cascade deletes and SetNull safeguards.
-* **Validation Layer**: Type-safe Zod schema validation on all incoming API request payloads.
-* **Auth & Security**: JWT-based stateless session authentication combined with `bcryptjs` password hashing.
+**AssetFlow** solves these challenges through a centralized role-based ERP platform that manages the complete lifecycle of enterprise assets—from registration to allocation, maintenance, auditing, reporting, and activity tracking.
 
 ---
 
-## 🔒 Implemented Core Rules
+# 🚀 Key Features
 
-### 1. Conflict Prevention on Allocations
-* **Rule**: Assets (laptops, monitors) can only be checked out by one person/department at a time.
-* **Behavior**: If Priya holds a MacBook and Raj tries to allocate it, the backend rejects it with `Conflict (409)`. The frontend displays a conflict modal showing who currently holds it, and offers to start a **Transfer Request**.
+## 🔐 Authentication & Role Management
 
-### 2. Time-Slot Overlap Validation on Shared Bookings
-* **Rule**: Bookings for shared rooms or vehicles cannot overlap.
-* **Behavior**: If Meeting Room B2 is booked from 9:00 AM to 10:30 AM, any overlapping request (e.g., 10:15 AM to 11:30 AM) is rejected by the server with a helpful message detailing the active booking.
+- JWT Authentication
+- Secure password hashing using bcrypt
+- Role-Based Access Control (RBAC)
 
-### 3. Progressive Role Elevation
-* **Rule**: Evaluators can register a new account on `/signup`. The very first account registered is automatically granted `Admin` role to bootstrap the system. All subsequent signups default to `Employee`. The Admin can promote any user to `Asset_Manager` or `Department_Head` via the **Organization Setup** directory.
+Supported Roles
 
----
+- Administrator
+- Asset Manager
+- Department Head
+- Employee
 
-## 👥 Seeded Scenario Accounts (For Evaluators)
-
-The database includes pre-configured mock data representing a corporate workspace. Use the credentials below to experience role-specific layouts:
-
-* **Default Password for all accounts**: `Admin@1234`
-
-| User Email | Assigned Role | Main Responsibility / Test Flow |
-| :--- | :--- | :--- |
-| **`admin@assetflow.com`** | **Admin** | Promotes employees, creates departments/categories, inspects system-wide activity logs. |
-| **`manager@assetflow.com`** | **Asset Manager** | Registers assets, assigns allocations, reviews maintenance boards, initiates and closes inventory audits. |
-| **`head.eng@assetflow.com`** | **Dept Head (Eng)** | Approves/rejects asset transfers request and views department assets. |
-| **`priya@assetflow.com`** | **Employee** | Views checked-out laptop, requests room bookings, and reports damaged items. |
+Each role automatically receives an interface tailored to its permissions.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🏢 Organization Management
 
-### 1. Install Dependencies
-Run the installation command in both the root workspace and subdirectories:
+Configure organizational master data including:
+
+- Departments
+- Asset Categories
+- Employee Directory
+- Department Hierarchy
+
+This serves as the foundation for all asset operations.
+
+---
+
+## 💻 Asset Directory
+
+Maintain a centralized inventory of company assets.
+
+Features include:
+
+- Asset Registration
+- Asset Categories
+- QR Code Identification
+- Department Assignment
+- Asset Condition Tracking
+- Acquisition Details
+- Search & Filtering
+
+Supported Asset Types:
+
+- Laptops
+- Monitors
+- Furniture
+- Vehicles
+- Servers
+- Meeting Rooms
+- Projectors
+- Shared Equipment
+
+---
+
+## 👥 Asset Allocation
+
+Assign organizational assets to employees.
+
+Features
+
+- Employee Allocation
+- Expected Return Dates
+- Active Allocation Tracking
+- Overdue Asset Detection
+- Asset Return Workflow
+
+### Business Rule
+
+An asset can only be allocated to **one employee at a time**.
+
+Duplicate allocations are automatically rejected by the backend.
+
+---
+
+## 📅 Resource Booking
+
+Book shared organizational resources such as:
+
+- Meeting Rooms
+- Conference Halls
+- Company Vehicles
+- Projectors
+
+Features
+
+- Time Slot Booking
+- Existing Booking Timeline
+- Booking History
+- Automatic Conflict Detection
+
+### Business Rule
+
+Overlapping bookings are automatically rejected.
+
+---
+
+## 🔧 Maintenance Management
+
+Track the complete repair lifecycle.
+
+Workflow
+
+Pending
+
+⬇
+
+Approved
+
+⬇
+
+Technician Assigned
+
+⬇
+
+In Progress
+
+⬇
+
+Resolved
+
+Features
+
+- Raise Repair Requests
+- Priority Levels
+- Technician Assignment
+- Repair Tracking
+- Resolution History
+
+---
+
+## 📋 Inventory Audit
+
+Verify physical inventory against digital records.
+
+Features
+
+- Audit Cycles
+- Verification Progress
+- Missing Asset Detection
+- Damaged Asset Reporting
+- Audit Notes
+- Completion Reports
+
+Verification Status
+
+- ✅ Verified
+- ❌ Missing
+- ⚠ Damaged
+
+---
+
+## 📊 Reports & Analytics
+
+Real-time dashboards provide operational insights.
+
+Available Reports
+
+- Asset Allocation Distribution
+- Department Utilization
+- Maintenance Statistics
+- Booking Analytics
+- Most Frequently Booked Resources
+- Live KPIs
+
+---
+
+## 🔔 Activity Logs & Notifications
+
+Every system action is recorded.
+
+Examples
+
+- Login Activity
+- Department Creation
+- Asset Registration
+- Allocation History
+- Audit Events
+- Maintenance Updates
+
+This improves transparency and accountability.
+
+---
+
+# ⚙ Business Rules
+
+## 1. Duplicate Allocation Prevention
+
+Only one employee may hold an asset at any given time.
+
+If an allocated asset is selected again, the backend returns:
+
+```
+409 Conflict
+```
+
+---
+
+## 2. Booking Conflict Detection
+
+Bookings cannot overlap.
+
+Example
+
+Existing Booking
+
+```
+09:00 AM → 10:30 AM
+```
+
+Requested Booking
+
+```
+10:00 AM → 11:00 AM
+```
+
+Result
+
+```
+Booking Rejected
+```
+
+---
+
+## 3. Role-Based Permissions
+
+| Role | Permissions |
+|-------|------------|
+| Admin | Full System Access |
+| Asset Manager | Assets, Maintenance, Audits |
+| Department Head | Department Assets & Transfers |
+| Employee | Book Resources, Raise Repairs |
+
+---
+
+# 🏗 System Architecture
+
+```
+                React Frontend
+                      │
+                      │ REST API
+                      ▼
+        Node.js + Express + TypeScript
+                      │
+              Prisma ORM
+                      │
+                  SQLite Database
+```
+
+---
+
+# 💻 Tech Stack
+
+## Frontend
+
+- React
+- Vite
+- TypeScript
+- Vanilla CSS
+- Responsive Design
+
+## Backend
+
+- Node.js
+- Express.js
+- TypeScript
+
+## Database
+
+- SQLite
+- Prisma ORM
+
+## Authentication
+
+- JWT
+- bcryptjs
+
+## Validation
+
+- Zod
+
+---
+
+# 📂 Project Structure
+
+```
+AssetFlow/
+
+│
+├── frontend/
+│   ├── src/
+│   ├── pages/
+│   ├── components/
+│   └── styles/
+│
+├── backend/
+│   ├── prisma/
+│   ├── routes/
+│   ├── middleware/
+│   ├── controllers/
+│   ├── services/
+│   └── utils/
+│
+└── README.md
+```
+
+---
+
+# 👥 Demo Accounts
+
+Default Password
+
+```
+Admin@1234
+```
+
+| Email | Role |
+|--------|------|
+| admin@assetflow.com | Administrator |
+| manager@assetflow.com | Asset Manager |
+| head.eng@assetflow.com | Department Head |
+| priya@assetflow.com | Employee |
+
+---
+
+# 🚀 Installation
+
+## 1. Install Dependencies
+
 ```bash
 npm install
 ```
 
-### 2. Set Up Environment Variables
-Create a `.env` file in the `backend/` directory:
+---
+
+## 2. Configure Environment
+
+Create
+
+```
+backend/.env
+```
+
 ```env
 PORT=5000
-JWT_SECRET=super-secret-key-for-development
+
+JWT_SECRET=super-secret-key
+
 DATABASE_URL="file:./dev.db"
 ```
 
-### 3. Push Database Schema
-Generate the SQLite database and tables using Prisma:
+---
+
+## 3. Create Database
+
 ```bash
 cd backend
-npx prisma db push
+
 npx prisma generate
+
+npx prisma db push
 ```
 
-### 4. Seed the Scenario Data
-Populate the database with all scenario accounts, departments, categories, and pre-allocated items:
+---
+
+## 4. Seed Demo Data
+
 ```bash
 npx tsx prisma/seed.ts
 ```
 
-### 5. Build and Launch
-Compile the typescript code and start the local development server:
-```bash
-# Build frontend and backend
-npm run build
+---
 
-# Start the application (runs on localhost:5000)
+## 5. Build Project
+
+```bash
+npm run build
+```
+
+---
+
+## 6. Start Server
+
+```bash
 npm run start
 ```
 
-Open your browser and navigate to **[http://localhost:5000](http://localhost:5000)** to explore!
+Open
+
+```
+http://localhost:5000
+```
+
+---
+
+# 🎯 Business Impact
+
+AssetFlow enables organizations to:
+
+- Eliminate spreadsheet-based asset tracking
+- Prevent duplicate asset allocation
+- Avoid booking conflicts
+- Improve maintenance visibility
+- Conduct structured inventory audits
+- Monitor asset utilization using real-time dashboards
+- Increase operational transparency with audit logs
+
+---
+
+# 🌟 Future Enhancements
+
+- Barcode & QR Scanner Integration
+- Email Notifications
+- Mobile Application
+- Asset Depreciation Tracking
+- Vendor Management
+- Purchase Order Integration
+- Multi-Branch Support
+- Cloud Deployment
+- AI-Based Maintenance Prediction
+
+---
+
+# 👨‍💻 Developed For
+
+**Odoo Hackathon**
+
+Enterprise Asset & Resource Management Challenge
+
+Built with ❤️ using React, Node.js, TypeScript, Prisma, and SQLite.
