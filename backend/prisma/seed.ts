@@ -25,7 +25,7 @@ async function main() {
     data: {
       name: 'Electronics',
       description: 'Laptops, Monitors, Phones, etc.',
-      customFields: { warranty_months: 24 }
+      customFields: JSON.stringify({ warranty_months: 24 })
     }
   });
 
@@ -33,7 +33,7 @@ async function main() {
     data: {
       name: 'Furniture',
       description: 'Desks, Chairs, Podiums',
-      customFields: { material: 'Wood/Steel' }
+      customFields: JSON.stringify({ material: 'Wood/Steel' })
     }
   });
 
@@ -41,7 +41,7 @@ async function main() {
     data: {
       name: 'Vehicles',
       description: 'Company cars, Delivery vans',
-      customFields: { insurance_expiry: '2027-12-31' }
+      customFields: JSON.stringify({ insurance_expiry: '2027-12-31' })
     }
   });
 
@@ -49,7 +49,7 @@ async function main() {
     data: {
       name: 'Shared Spaces',
       description: 'Conference rooms, Labs, Office spaces',
-      customFields: { capacity: 12 }
+      customFields: JSON.stringify({ capacity: 12 })
     }
   });
 

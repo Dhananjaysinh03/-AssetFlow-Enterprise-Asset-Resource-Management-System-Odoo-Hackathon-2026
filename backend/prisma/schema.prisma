@@ -1,81 +1,22 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-enum Role {
-  Admin
-  Asset_Manager
-  Department_Head
-  Employee
-}
-
-enum AssetStatus {
-  Available
-  Allocated
-  Reserved
-  Under_Maintenance
-  Lost
-  Retired
-  Disposed
-}
-
-enum Condition {
-  New
-  Good
-  Fair
-  Poor
-  Damaged
-}
-
-enum BookingStatus {
-  Upcoming
-  Ongoing
-  Completed
-  Cancelled
-}
-
-enum MaintenancePriority {
-  Low
-  Medium
-  High
-  Critical
-}
-
-enum MaintenanceStatus {
-  Pending
-  Approved
-  Rejected
-  Technician_Assigned
-  In_Progress
-  Resolved
-}
-
-enum TransferStatus {
-  Requested
-  Approved
-  Rejected
-}
-
-enum AuditStatus {
-  Verified
-  Missing
-  Damaged
-}
-
 model User {
   id                 String               @id @default(uuid())
   email              String               @unique
-  passwordHash       String
+  passwordHash       String               @map("password_hash")
   name               String
-  role               Role                 @default(Employee)
-  isActive           Boolean              @default(true)
-  departmentId       String?
-  department         Department?          @relation("UserDepartment", fields: [departmentId], references: [id])
+  role               String               @default("Employee") // Admin, Asset_Manager, Department_Head, Employee
+  isActive           Boolean              @default(true) @map("is_active")
+  deletedAt          DateTime?            @map("deleted_at")
+  departmentId       String?              @map("department_id")
+  department         Department?          @relation("UserDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
   
   // Audits assigned to this user
   auditedCycles      AuditCycle[]         @relation("AuditorRelation")
@@ -93,20 +34,23 @@ model User {
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
 
+  @@index([email])
+  @@index([departmentId])
   @@map("users")
 }
 
 model Department {
   id               String            @id @default(uuid())
   name             String            @unique
-  isActive         Boolean           @default(true)
+  isActive         Boolean           @default(true) @map("is_active")
+  deletedAt        DateTime?         @map("deleted_at")
   
-  parentDepartmentId String?
-  parentDepartment   Department?     @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+  parentDepartmentId String?         @map("parent_department_id")
+  parentDepartment   Department?     @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id], onDelete: SetNull)
   subDepartments     Department[]    @relation("DepartmentHierarchy")
   
   // Department head
-  managerId        String?           @unique
+  managerId        String?           @unique @map("manager_id")
   
   members          User[]            @relation("UserDepartment")
   allocations      AssetAllocation[]
@@ -114,6 +58,7 @@ model Department {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
+  @@index([parentDepartmentId])
   @@map("departments")
 }
 
@@ -123,7 +68,8 @@ model AssetCategory {
   description    String?
   // Schema/fields for category-specific variables (stored as JSON)
   // e.g. {"warranty_months": 24, "fuel_type": "Diesel"}
-  customFields   Json?    @map("custom_fields")
+  customFields   String?  @map("custom_fields") // SQLite JSON support can be mapped as string/text
+  deletedAt      DateTime? @map("deleted_at")
   
   assets         Asset[]
   
@@ -136,18 +82,19 @@ model AssetCategory {
 model Asset {
   id                 String               @id @default(uuid())
   name               String
-  categoryId         String
-  category           AssetCategory        @relation(fields: [categoryId], references: [id])
+  categoryId         String               @map("category_id")
+  category           AssetCategory        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   assetTag           String               @unique @map("asset_tag") // AF-0001
   serialNumber       String?              @map("serial_number")
   acquisitionDate    DateTime?            @map("acquisition_date")
-  acquisitionCost    Decimal?             @map("acquisition_cost")
-  condition          Condition            @default(New)
+  acquisitionCost    Float?               @map("acquisition_cost") // Map Decimal to Float for SQLite
+  condition          String               @default("New") // New, Good, Fair, Poor, Damaged
   location           String?
   isShared           Boolean              @default(false) @map("is_shared") // Can be booked as resource
-  status             AssetStatus          @default(Available)
+  status             String               @default("Available") // Available, Allocated, Reserved, Under_Maintenance, Lost, Retired, Disposed
   photoUrl           String?              @map("photo_url")
-  documentUrls       Json?                @map("document_urls") // Array of string urls
+  documentUrls       String?              @map("document_urls") // Stringified array
+  deletedAt          DateTime?            @map("deleted_at")
   
   allocations        AssetAllocation[]
   bookings           ResourceBooking[]
@@ -157,17 +104,20 @@ model Asset {
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
 
+  @@index([categoryId])
+  @@index([status])
+  @@index([assetTag])
   @@map("assets")
 }
 
 model AssetAllocation {
   id               String            @id @default(uuid())
   assetId          String            @map("asset_id")
-  asset            Asset             @relation(fields: [assetId], references: [id])
+  asset            Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
   userId           String?           @map("user_id") // Assigned to Employee
-  user             User?             @relation(fields: [userId], references: [id])
+  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   departmentId     String?           @map("department_id") // Assigned to Department
-  department       Department?       @relation(fields: [departmentId], references: [id])
+  department       Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   allocatedDate    DateTime          @default(now()) @map("allocated_date")
   expectedReturnDate DateTime?       @map("expected_return_date")
   returnedDate     DateTime?         @map("returned_date")
@@ -179,62 +129,75 @@ model AssetAllocation {
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
+  @@index([assetId])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([isActive])
   @@map("asset_allocations")
 }
 
 model TransferRequest {
   id                String          @id @default(uuid())
   allocationId      String          @map("allocation_id")
-  allocation        AssetAllocation @relation(fields: [allocationId], references: [id])
+  allocation        AssetAllocation @relation(fields: [allocationId], references: [id], onDelete: Cascade)
   requestedById     String          @map("requested_by_id")
-  requestedBy       User            @relation("TransferRequester", fields: [requestedById], references: [id])
+  requestedBy       User            @relation("TransferRequester", fields: [requestedById], references: [id], onDelete: Cascade)
   targetUserId      String?         @map("target_user_id")
   targetDepartmentId String?        @map("target_department_id")
-  status            TransferStatus  @default(Requested)
+  status            String          @default("Requested") // Requested, Approved, Rejected
   approvedById      String?         @map("approved_by_id")
-  approvedBy        User?           @relation("TransferApprover", fields: [approvedById], references: [id])
+  approvedBy        User?           @relation("TransferApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   notes             String?
   
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
 
+  @@index([allocationId])
+  @@index([requestedById])
+  @@index([status])
   @@map("transfer_requests")
 }
 
 model ResourceBooking {
   id          String        @id @default(uuid())
   assetId     String        @map("asset_id") // Asset must be isShared = true
-  asset       Asset         @relation(fields: [assetId], references: [id])
+  asset       Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
   userId      String        @map("user_id")
-  user        User          @relation(fields: [userId], references: [id])
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   startTime   DateTime      @map("start_time")
   endTime     DateTime      @map("end_time")
-  status      BookingStatus @default(Upcoming)
+  status      String        @default("Upcoming") // Upcoming, Ongoing, Completed, Cancelled
   notes       String?
   
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
+  @@index([assetId])
+  @@index([userId])
+  @@index([startTime, endTime])
   @@map("resource_bookings")
 }
 
 model MaintenanceRequest {
   id               String              @id @default(uuid())
   assetId          String              @map("asset_id")
-  asset            Asset               @relation(fields: [assetId], references: [id])
+  asset            Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
   requesterId      String              @map("requester_id")
-  requester        User                @relation("MaintenanceRequester", fields: [requesterId], references: [id])
+  requester        User                @relation("MaintenanceRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   issueDescription String              @map("issue_description")
-  priority         MaintenancePriority @default(Medium)
-  status           MaintenanceStatus   @default(Pending)
+  priority         String              @default("Medium") // Low, Medium, High, Critical
+  status           String              @default("Pending") // Pending, Approved, Rejected, Technician_Assigned, In_Progress, Resolved
   assignedToId     String?             @map("assigned_to_id") // Technician
-  assignedTo       User?               @relation("MaintenanceTechnician", fields: [assignedToId], references: [id])
+  assignedTo       User?               @relation("MaintenanceTechnician", fields: [assignedToId], references: [id], onDelete: SetNull)
   photoUrl         String?             @map("photo_url")
   resolutionNotes  String?             @map("resolution_notes")
   
   createdAt        DateTime            @default(now()) @map("created_at")
   updatedAt        DateTime            @updatedAt @map("updated_at")
 
+  @@index([assetId])
+  @@index([requesterId])
+  @@index([status])
   @@map("maintenance_requests")
 }
 
@@ -258,38 +221,43 @@ model AuditCycle {
 model AuditRecord {
   id           String      @id @default(uuid())
   cycleId      String      @map("cycle_id")
-  cycle        AuditCycle  @relation(fields: [cycleId], references: [id])
+  cycle        AuditCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
   assetId      String      @map("asset_id")
-  asset        Asset       @relation(fields: [assetId], references: [id])
-  status       AuditStatus
+  asset        Asset       @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  status       String      // Verified, Missing, Damaged
   notes        String?
   
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
+  @@index([cycleId])
+  @@index([assetId])
   @@map("audit_records")
 }
 
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   action    String
   details   String?
   
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
   @@map("audit_logs")
 }
 
 model Notification {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   String
   isRead    Boolean  @default(false) @map("is_read")
   
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@index([userId])
+  @@index([isRead])
   @@map("notifications")
 }

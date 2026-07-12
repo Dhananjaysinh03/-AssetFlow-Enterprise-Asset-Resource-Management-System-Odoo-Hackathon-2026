@@ -159,7 +159,7 @@ router.post('/', authenticateToken as any, requireRole(['Admin', 'Asset_Manager'
         isShared: data.isShared || false,
         status: 'Available',
         photoUrl: data.photoUrl || null,
-        documentUrls: data.documentUrls || []
+        documentUrls: JSON.stringify(data.documentUrls || [])
       }
     });
 
@@ -187,7 +187,7 @@ router.put('/:id', authenticateToken as any, requireRole(['Admin', 'Asset_Manage
       data: {
         ...data,
         acquisitionDate: data.acquisitionDate ? new Date(data.acquisitionDate) : undefined,
-        documentUrls: data.documentUrls || undefined
+        documentUrls: data.documentUrls ? JSON.stringify(data.documentUrls) : undefined
       }
     });
 

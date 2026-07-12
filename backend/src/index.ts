@@ -47,6 +47,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date() });
 });
 
+// Catch-all route to serve the React SPA for any unmatched routes
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  } else {
+    next();
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`AssetFlow Backend Server is running on port ${PORT}`);
