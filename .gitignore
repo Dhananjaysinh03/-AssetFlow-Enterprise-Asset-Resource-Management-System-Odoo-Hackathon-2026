@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Production builds
+dist/
+backend/dist/
+frontend/dist/
+backend/public/assets/
+backend/public/index.html
+
+# Local Environment Secrets
+.env
+.env.local
+backend/.env
+backend/.env.local
+
+# Databases
+*.db
+*.db-journal
+backend/prisma/dev.db
+
+# OS / Editor configuration
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
