@@ -14,6 +14,7 @@ const assetSchema = z.object({
   condition: z.enum(['New', 'Good', 'Fair', 'Poor', 'Damaged']).optional(),
   location: z.string().nullable().optional(),
   isShared: z.boolean().optional(),
+  isBookable: z.boolean().optional(), // Frontend alias for isShared
   photoUrl: z.string().nullable().optional(),
   documentUrls: z.array(z.string()).optional()
 });
@@ -91,7 +92,13 @@ router.get('/', authenticateToken as any, async (req, res) => {
       orderBy: { assetTag: 'asc' }
     });
 
-    res.json(assets);
+    const mapped = assets.map(a => ({
+      ...a,
+      tag: a.assetTag,
+      isBookable: a.isShared
+    }));
+
+    res.json(mapped);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -134,7 +141,11 @@ router.get('/:id', authenticateToken as any, async (req, res) => {
        return;
     }
 
-    res.json(asset);
+    res.json({
+      ...asset,
+      tag: asset.assetTag,
+      isBookable: asset.isShared
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -146,25 +157,26 @@ router.post('/', authenticateToken as any, requireRole(['Admin', 'Asset_Manager'
     const data = assetSchema.parse(req.body);
     const assetTag = await generateAssetTag();
 
+    const { isBookable, ...rest } = data;
+    const isSharedVal = data.isShared !== undefined ? data.isShared : (data.isBookable || false);
+
     const asset = await prisma.asset.create({
       data: {
-        name: data.name,
-        categoryId: data.categoryId,
+        ...rest,
         assetTag,
-        serialNumber: data.serialNumber || null,
         acquisitionDate: data.acquisitionDate ? new Date(data.acquisitionDate) : null,
-        acquisitionCost: data.acquisitionCost || null,
-        condition: data.condition || 'New',
-        location: data.location || null,
-        isShared: data.isShared || false,
-        status: 'Available',
-        photoUrl: data.photoUrl || null,
-        documentUrls: JSON.stringify(data.documentUrls || [])
+        documentUrls: JSON.stringify(data.documentUrls || []),
+        isShared: isSharedVal,
+        status: 'Available'
       }
     });
 
     await logActivity(req.user!.id, 'Register asset', `Registered asset ${asset.name} (${assetTag})`);
-    res.status(201).json(asset);
+    res.status(201).json({
+      ...asset,
+      tag: asset.assetTag,
+      isBookable: asset.isShared
+    });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
@@ -182,17 +194,25 @@ router.put('/:id', authenticateToken as any, requireRole(['Admin', 'Asset_Manage
        return;
     }
 
+    const { isBookable, ...rest } = data;
+    const isSharedVal = data.isShared !== undefined ? data.isShared : data.isBookable;
+
     const updated = await prisma.asset.update({
       where: { id },
       data: {
-        ...data,
+        ...rest,
+        isShared: isSharedVal,
         acquisitionDate: data.acquisitionDate ? new Date(data.acquisitionDate) : undefined,
         documentUrls: data.documentUrls ? JSON.stringify(data.documentUrls) : undefined
       }
     });
 
     await logActivity(req.user!.id, 'Update asset', `Updated asset ${asset.assetTag}`);
-    res.json(updated);
+    res.json({
+      ...updated,
+      tag: updated.assetTag,
+      isBookable: updated.isShared
+    });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

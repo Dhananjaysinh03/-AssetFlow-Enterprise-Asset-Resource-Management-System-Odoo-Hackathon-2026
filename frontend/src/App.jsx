@@ -7,6 +7,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import OrgSetup from './pages/OrgSetup';
 import AssetDirectory from './pages/AssetDirectory';
+import QRScanner from './pages/QRScanner';
 import Allocations from './pages/Allocations';
 import Bookings from './pages/Bookings';
 import Maintenance from './pages/Maintenance';
@@ -32,6 +33,7 @@ export default function App() {
             }
           />
           <Route path="/assets" element={<ProtectedRoute><AssetDirectory /></ProtectedRoute>} />
+          <Route path="/scanner" element={<ProtectedRoute><QRScanner /></ProtectedRoute>} />
           <Route path="/allocations" element={<ProtectedRoute><Allocations /></ProtectedRoute>} />
           <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
           <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />

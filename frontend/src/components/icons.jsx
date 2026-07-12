@@ -60,3 +60,7 @@ export const LogsIcon = () => (
   <svg {...base}><path d="M12 6h9M12 12h9M12 18h9M3 6h.01M3 12h.01M3 18h.01" /></svg>
 );
 
+export const ScannerIcon = () => (
+  <svg {...base}><path d="M4 8V4h4M16 4h4v4M4 16v4h4M16 20h4v-4M8 12h8" /></svg>
+);
+

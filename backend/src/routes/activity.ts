@@ -50,7 +50,7 @@ router.patch('/notifications/:id/read', authenticateToken as any, async (req: Au
 });
 
 // Full system audit logs (Admin and Asset Manager only)
-router.get('/logs', authenticateToken as any, requireRole(['Admin', 'Asset_Manager']) as any, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/logs', authenticateToken as any, requireRole(['Admin', 'Asset_Manager', 'Department_Head']) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const logs = await prisma.auditLog.findMany({
       include: {

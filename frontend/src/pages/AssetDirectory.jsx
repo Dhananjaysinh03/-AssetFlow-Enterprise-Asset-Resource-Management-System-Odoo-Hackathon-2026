@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { assetsApi, categoriesApi, departmentsApi } from '../api/client';
 import StatusBadge from '../components/StatusBadge';
 import { validate, hasErrors, isRequired, isNonNegativeNumber } from '../utils/validators';
@@ -27,6 +28,7 @@ export default function AssetDirectory() {
   const [errors, setErrors] = useState({});
   const [banner, setBanner] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [qrModalAsset, setQrModalAsset] = useState(null);
 
   useEffect(() => {
     categoriesApi.list().then(setCategories).catch(() => setCategories([]));
@@ -200,7 +202,7 @@ export default function AssetDirectory() {
         <div className="table-wrap">
           <table className="data-table">
             <thead>
-              <tr><th>Tag</th><th>Name</th><th>Category</th><th>Status</th><th>Location</th><th>Bookable</th></tr>
+              <tr><th>Tag</th><th>Name</th><th>Category</th><th>Status</th><th>Location</th><th>Bookable</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {assets.length === 0 && (
@@ -214,12 +216,38 @@ export default function AssetDirectory() {
                   <td><StatusBadge status={a.status} /></td>
                   <td className="text-secondary">{a.location || '—'}</td>
                   <td className="text-secondary">{a.isBookable ? 'Yes' : 'No'}</td>
+                  <td>
+                    <button className="btn btn-outline" style={{ padding: '4px 8px', fontSize: '12px' }} onClick={() => setQrModalAsset(a)}>QR Code</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {qrModalAsset && (
+        <div className="modal-backdrop" onClick={() => setQrModalAsset(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <div className="modal-header">
+              <h2>Asset QR Code</h2>
+              <button className="icon-btn" onClick={() => setQrModalAsset(null)}>✕</button>
+            </div>
+            <div className="modal-body flex flex-col items-center py-6">
+              <QRCodeSVG value={qrModalAsset.tag} size={200} level="H" includeMargin={true} />
+              <h3 className="mt-4 mb-1">{qrModalAsset.name}</h3>
+              <div className="cell-mono text-secondary">{qrModalAsset.tag}</div>
+              <p className="mt-4 text-secondary text-sm">
+                Print this QR code and attach it to the asset. 
+                Scan it with the QR Scanner page to view details instantly.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary w-full" onClick={() => window.print()}>Print Label</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

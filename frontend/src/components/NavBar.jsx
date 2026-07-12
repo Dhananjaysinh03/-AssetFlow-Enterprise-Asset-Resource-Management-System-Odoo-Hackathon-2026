@@ -11,6 +11,7 @@ import {
   AuditIcon,
   ReportsIcon,
   LogsIcon,
+  ScannerIcon,
 } from './icons';
 
 function initials(name = '') {
@@ -50,6 +51,9 @@ export default function NavBar({ isOpen }) {
         )}
         <NavLink to="/assets" className={linkClass}>
           <span className="nav-icon"><AssetIcon /></span> Asset Directory
+        </NavLink>
+        <NavLink to="/scanner" className={linkClass}>
+          <span className="nav-icon"><ScannerIcon /></span> QR Scanner
         </NavLink>
         <NavLink to="/allocations" className={linkClass}>
           <span className="nav-icon"><AllocationIcon /></span> Allocation & Transfer
