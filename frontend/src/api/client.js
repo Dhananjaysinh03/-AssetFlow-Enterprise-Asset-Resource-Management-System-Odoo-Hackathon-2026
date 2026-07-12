@@ -69,21 +69,21 @@ export const authApi = {
 
 // ---- Org setup ----
 export const departmentsApi = {
-  list: () => api.get('/departments'),
-  create: (payload) => api.post('/departments', payload),
-  update: (id, payload) => api.patch(`/departments/${id}`, payload),
+  list: () => api.get('/org/departments'),
+  create: (payload) => api.post('/org/departments', payload),
+  update: (id, payload) => api.put(`/org/departments/${id}`, payload),
 };
 
 export const categoriesApi = {
-  list: () => api.get('/categories'),
-  create: (payload) => api.post('/categories', payload),
-  update: (id, payload) => api.patch(`/categories/${id}`, payload),
+  list: () => api.get('/org/categories'),
+  create: (payload) => api.post('/org/categories', payload),
+  update: (id, payload) => api.put(`/org/categories/${id}`, payload),
 };
 
 export const employeesApi = {
-  list: () => api.get('/employees'),
-  setRole: (id, role) => api.patch(`/employees/${id}/role`, { role }),
-  setStatus: (id, status) => api.patch(`/employees/${id}/status`, { status }),
+  list: () => api.get('/org/employees'),
+  setRole: (id, role) => api.put(`/org/employees/${id}`, { role }),
+  setStatus: (id, isActive) => api.put(`/org/employees/${id}`, { isActive }),
 };
 
 // ---- Assets ----

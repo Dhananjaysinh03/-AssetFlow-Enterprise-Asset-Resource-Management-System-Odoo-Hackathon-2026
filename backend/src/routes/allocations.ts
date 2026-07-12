@@ -8,8 +8,10 @@ const router = Router();
 const allocateSchema = z.object({
   assetId: z.string(),
   userId: z.string().nullable().optional(), // Employee
+  holderUserId: z.string().nullable().optional(), // Alias for userId
   departmentId: z.string().nullable().optional(), // Department
-  expectedReturnDate: z.string().nullable().optional()
+  expectedReturnDate: z.string().nullable().optional(),
+  expectedReturn: z.string().nullable().optional() // Alias for expectedReturnDate
 });
 
 // List allocations
@@ -19,11 +21,36 @@ router.get('/', authenticateToken as any, async (req, res) => {
       include: {
         asset: true,
         user: { select: { id: true, name: true, email: true } },
-        department: { select: { id: true, name: true } }
+        department: { select: { id: true, name: true } },
+        transferRequests: {
+          where: { status: 'Requested' }
+        }
       },
       orderBy: { allocatedDate: 'desc' }
     });
-    res.json(allocations);
+
+    const result = allocations.map(a => {
+      let status = 'ACTIVE';
+      if (!a.isActive) {
+        status = 'RETURNED';
+      } else if (a.transferRequests.length > 0) {
+        status = 'TRANSFER_PENDING';
+      }
+
+      return {
+        id: a.id,
+        assetId: a.assetId,
+        assetTag: a.asset.assetTag,
+        assetName: a.asset.name,
+        holderName: a.user?.name || a.department?.name || '—',
+        allocatedAt: a.allocatedDate,
+        expectedReturn: a.expectedReturnDate,
+        returnedAt: a.returnedDate,
+        status
+      };
+    });
+
+    res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -32,7 +59,11 @@ router.get('/', authenticateToken as any, async (req, res) => {
 // Allocate an asset
 router.post('/', authenticateToken as any, requireRole(['Admin', 'Asset_Manager']) as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { assetId, userId, departmentId, expectedReturnDate } = allocateSchema.parse(req.body);
+    const parsed = allocateSchema.parse(req.body);
+    const assetId = parsed.assetId;
+    const userId = parsed.userId || parsed.holderUserId || null;
+    const departmentId = parsed.departmentId || null;
+    const expectedReturnDate = parsed.expectedReturnDate || parsed.expectedReturn || null;
 
     const asset = await prisma.asset.findUnique({
       where: { id: assetId },

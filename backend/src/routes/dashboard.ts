@@ -40,13 +40,25 @@ router.get('/kpi', authenticateToken as any, async (req, res) => {
       }
     });
 
+    // Upcoming allocations: expectedReturnDate is in the future
+    const upcomingReturnsCount = await prisma.assetAllocation.count({
+      where: {
+        isActive: true,
+        returnedDate: null,
+        expectedReturnDate: {
+          gte: new Date()
+        }
+      }
+    });
+
     res.json({
-      availableAssets,
-      allocatedAssets,
+      assetsAvailable: availableAssets,
+      assetsAllocated: allocatedAssets,
       maintenanceToday,
       activeBookings,
       pendingTransfers,
-      overdueAllocations: overdueAllocationsCount
+      upcomingReturns: upcomingReturnsCount,
+      overdueReturns: overdueAllocationsCount
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

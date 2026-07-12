@@ -93,7 +93,7 @@ router.post('/cycles', authenticateToken as any, requireRole(['Admin', 'Asset_Ma
 });
 
 // Record Audit Check (Assigned Auditors only)
-router.post('/cycles/:id/verify', authenticateToken as any, async (req: AuthenticatedRequest, res: Response) => {
+router.post(['/cycles/:id/verify', '/cycles/:id/records'], authenticateToken as any, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const cycleId = req.params.id as string;
     const verifySchema = z.object({

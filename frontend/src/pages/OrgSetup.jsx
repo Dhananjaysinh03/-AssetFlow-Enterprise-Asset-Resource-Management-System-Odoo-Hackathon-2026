@@ -3,7 +3,7 @@ import { departmentsApi, categoriesApi, employeesApi } from '../api/client';
 import StatusBadge from '../components/StatusBadge';
 import { validate, hasErrors, isRequired } from '../utils/validators';
 
-const ROLES = ['EMPLOYEE', 'DEPARTMENT_HEAD', 'ASSET_MANAGER', 'ADMIN'];
+const ROLES = ['Employee', 'Department_Head', 'Asset_Manager', 'Admin'];
 
 export default function OrgSetup() {
   const [tab, setTab] = useState('departments');
@@ -40,7 +40,7 @@ export default function OrgSetup() {
 
 function DepartmentsTab() {
   const [departments, setDepartments] = useState([]);
-  const [values, setValues] = useState({ name: '', parentId: '' });
+  const [values, setValues] = useState({ name: '', parentDepartmentId: '' });
   const [errors, setErrors] = useState({});
   const [banner, setBanner] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -57,8 +57,8 @@ function DepartmentsTab() {
     setSubmitting(true);
     setBanner(null);
     try {
-      await departmentsApi.create({ name: values.name, parentId: values.parentId || null });
-      setValues({ name: '', parentId: '' });
+      await departmentsApi.create({ name: values.name, parentDepartmentId: values.parentDepartmentId || null });
+      setValues({ name: '', parentDepartmentId: '' });
       setBanner({ type: 'success', text: `Department "${values.name}" created.` });
       load();
     } catch (err) {
@@ -69,8 +69,7 @@ function DepartmentsTab() {
   };
 
   const toggleStatus = async (dept) => {
-    const next = dept.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-    await departmentsApi.update(dept.id, { status: next });
+    await departmentsApi.update(dept.id, { isActive: !dept.isActive });
     load();
   };
 
@@ -88,7 +87,7 @@ function DepartmentsTab() {
             </div>
             <div className="field">
               <label>Parent department (optional)</label>
-              <select value={values.parentId} onChange={(e) => setValues((v) => ({ ...v, parentId: e.target.value }))}>
+              <select value={values.parentDepartmentId} onChange={(e) => setValues((v) => ({ ...v, parentDepartmentId: e.target.value }))}>
                 <option value="">None</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>{d.name}</option>
@@ -115,12 +114,12 @@ function DepartmentsTab() {
               {departments.map((d) => (
                 <tr key={d.id}>
                   <td>{d.name}</td>
-                  <td className="text-secondary">{departments.find((p) => p.id === d.parentId)?.name || '—'}</td>
-                  <td className="text-secondary">{d.headName || '—'}</td>
-                  <td><StatusBadge status={d.status} /></td>
+                  <td className="text-secondary">{d.parentDepartment?.name || '—'}</td>
+                  <td className="text-secondary">{d.manager?.name || '—'}</td>
+                  <td><StatusBadge status={d.isActive ? 'Active' : 'Inactive'} /></td>
                   <td>
                     <button className="btn btn-ghost btn-sm" onClick={() => toggleStatus(d)}>
-                      {d.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                      {d.isActive ? 'Deactivate' : 'Activate'}
                     </button>
                   </td>
                 </tr>
@@ -216,8 +215,7 @@ function EmployeesTab() {
   };
 
   const toggleStatus = async (emp) => {
-    const next = emp.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-    await employeesApi.setStatus(emp.id, next);
+    await employeesApi.setStatus(emp.id, !emp.isActive);
     load();
   };
 
@@ -238,7 +236,7 @@ function EmployeesTab() {
                 <tr key={emp.id}>
                   <td>{emp.name}</td>
                   <td className="text-secondary">{emp.email}</td>
-                  <td className="text-secondary">{emp.departmentName || '—'}</td>
+                  <td className="text-secondary">{emp.department?.name || '—'}</td>
                   <td>
                     <select value={emp.role} onChange={(e) => changeRole(emp, e.target.value)}>
                       {ROLES.map((r) => (
@@ -246,10 +244,10 @@ function EmployeesTab() {
                       ))}
                     </select>
                   </td>
-                  <td><StatusBadge status={emp.status} /></td>
+                  <td><StatusBadge status={emp.isActive ? 'Active' : 'Inactive'} /></td>
                   <td>
                     <button className="btn btn-ghost btn-sm" onClick={() => toggleStatus(emp)}>
-                      {emp.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                      {emp.isActive ? 'Deactivate' : 'Activate'}
                     </button>
                   </td>
                 </tr>

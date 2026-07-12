@@ -44,9 +44,9 @@ router.get('/', authenticateToken as any, async (req, res) => {
 
     if (search) {
       whereClause.OR = [
-        { name: { contains: String(search), mode: 'insensitive' } },
-        { assetTag: { contains: String(search), mode: 'insensitive' } },
-        { serialNumber: { contains: String(search), mode: 'insensitive' } }
+        { name: { contains: String(search) } },
+        { assetTag: { contains: String(search) } },
+        { serialNumber: { contains: String(search) } }
       ];
     }
 
@@ -59,7 +59,7 @@ router.get('/', authenticateToken as any, async (req, res) => {
     }
 
     if (location) {
-      whereClause.location = { contains: String(location), mode: 'insensitive' };
+      whereClause.location = { contains: String(location) };
     }
 
     if (isShared !== undefined) {
