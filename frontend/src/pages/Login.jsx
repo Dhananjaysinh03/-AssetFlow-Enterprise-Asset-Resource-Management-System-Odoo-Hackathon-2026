@@ -42,7 +42,7 @@ export default function Login() {
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-mark">AF</div>
-          <h2>AssetFlow</h2>
+          <h2>AssetFlow - login</h2>
         </div>
 
         {serverError && <div className="banner banner-danger">{serverError}</div>}
@@ -82,9 +82,12 @@ export default function Login() {
           </button>
         </form>
 
+        <div className="banner banner-info mt-4 text-center">
+          Sign up creates an employee account. Admin roles are assigned later.
+        </div>
+
         <div className="auth-footer-link">
           New here? <Link to="/signup">Create an account</Link>
-          <div className="field-hint mt-2">Signup creates an employee account — admin roles are assigned later.</div>
         </div>
       </div>
     </div>
